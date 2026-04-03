@@ -50,45 +50,20 @@ struct GenerateCommand: AsyncParsableCommand {
         overriddenOutput = ProcessInfo.processInfo.environment["CUCKOO_OVERRIDE_OUTPUT"]
         Module.overriddenOutput = overriddenOutput
 
-        let requestedModuleName = ProcessInfo.processInfo.environment["CUCKOO_MODULE_NAME"]
-        let compoundModuleName = ProcessInfo.processInfo.environment["CUCKOO_COMPOUND_MODULE_NAME"]
-
-        let allModules = try modules(
+        let modules = try modules(
             configurationPath: configurationFile.path,
             contents: configurationFile.contents
         )
 
-        var modules: [Module]
-        if let compoundModuleName {
-            let compoundMatches = allModules.filter { $0.name == compoundModuleName }
-            if !compoundMatches.isEmpty {
-                // Compound key (TARGET/MODULE) found – use it exclusively.
-                // An entry with empty sources acts as a suppressor, producing an empty output file.
-                modules = compoundMatches
-            } else if let requestedModuleName {
-                // No compound override – fall back to the plain module name.
-                modules = allModules.filter { $0.name == requestedModuleName }
-            } else {
-                modules = []
-            }
-        } else if let requestedModuleName {
-            modules = allModules.filter { $0.name == requestedModuleName }
-        } else {
-            modules = allModules
-        }
-
         if modules.isEmpty {
-            let effectiveName = compoundModuleName ?? requestedModuleName
-            if let effectiveName {
-                log(.info, message: "No module named '\(effectiveName)' found in Cuckoofile, skipping generation.")
+            let requestedModuleName = ProcessInfo.processInfo.environment["CUCKOO_MODULE_NAME"]
+            if let requestedModuleName {
+                log(.info, message: "No module named '\(requestedModuleName)' found in Cuckoofile, skipping generation.")
             }
             if let outputPath = overriddenOutput {
                 let path = Path(outputPath, expandingTilde: true)
                 try? path.parent.createDirectory(withIntermediateDirectories: true)
-                let existing = try? String(contentsOfFile: path.rawValue, encoding: .utf8)
-                if existing != "" {
-                    try? TextFile(path: path).write("")
-                }
+                try? TextFile(path: path).write("")
             }
             return
         }
@@ -126,10 +101,7 @@ struct GenerateCommand: AsyncParsableCommand {
                             ?? originalFileName
                         let outputFile = TextFile(path: absoluteOutputPath + "\(fileNameWithoutExtension).swift")
                         do {
-                            let existing = try? outputFile.read()
-                            if existing != generatedFile.contents {
-                                try outputFile.write(generatedFile.contents)
-                            }
+                            try outputFile.write(generatedFile.contents)
                         } catch {
                             log(.error, message: "Failed to write to file '\(outputFile)':", error)
                         }
@@ -137,11 +109,7 @@ struct GenerateCommand: AsyncParsableCommand {
                 } else {
                     let outputFile = TextFile(path: absoluteOutputPath)
                     do {
-                        let newContents = generatedFiles.map(\.contents).joined(separator: "\n\n")
-                        let existing = try? outputFile.read()
-                        if existing != newContents {
-                            try outputFile.write(newContents)
-                        }
+                        try outputFile.write(generatedFiles.map(\.contents).joined(separator: "\n\n"))
                     } catch {
                         log(.error, message: "Failed to write to file '\(outputFile)':", error)
                     }
@@ -153,9 +121,11 @@ struct GenerateCommand: AsyncParsableCommand {
     }
 
     func modules(configurationPath: Path, contents: String) throws -> [Module] {
+        let requestedModuleName = ProcessInfo.processInfo.environment["CUCKOO_MODULE_NAME"]
+
         var errorMessages: [String] = []
         var globalOutput: String? = overriddenOutput
-        var modules: [Module] = []
+        var allModules: [Module] = []
         let table = try TOMLTable(string: contents)
 
         // Sorting to make sure global properties are evaluated first to be available as fallbacks.
@@ -201,7 +171,7 @@ struct GenerateCommand: AsyncParsableCommand {
                             dto: dto
                         )
                         log(.verbose, message: "Module \(moduleName):", module)
-                        modules.append(module)
+                        allModules.append(module)
                     } catch {
                         errorMessages.append(String(describing: error))
                     }
@@ -215,7 +185,10 @@ struct GenerateCommand: AsyncParsableCommand {
             throw GenerateError.configurationErrors(details: errorMessages)
         }
 
-        return modules
+        if let requestedModuleName {
+            return allModules.filter { $0.name == requestedModuleName }
+        }
+        return allModules
     }
 
     private enum GenerateError: Error, CustomStringConvertible {

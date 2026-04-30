@@ -425,6 +425,8 @@ extension Crawler {
                         .split(separator: ",")
                         .map { String($0).trimmed } ?? []
                 )
+            case "MainActor":
+                return .mainActor
             // These will need some more work, not sure if worth the effort.
 //            case "objc":
 //                return .objc

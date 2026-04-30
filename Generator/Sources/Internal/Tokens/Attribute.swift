@@ -4,6 +4,7 @@ enum Attribute: Hashable, CustomStringConvertible {
     case available(arguments: [String])
     case objc
     case objcMembers
+    case mainActor
 
     var description: String {
         switch self {
@@ -13,6 +14,8 @@ enum Attribute: Hashable, CustomStringConvertible {
             "@objc"
         case .objcMembers:
             "@objcMembers"
+        case .mainActor:
+            "@MainActor"
         }
     }
 

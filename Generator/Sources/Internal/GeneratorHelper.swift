@@ -168,6 +168,13 @@ extension GeneratorHelper {
                 return ""
             }
         }
+        stencilExtension.registerFilter("nonisolatedUnsafe") { (value: Any?) in
+            if let value = value as? Bool, value {
+                return "nonisolated(unsafe) "
+            } else {
+                return ""
+            }
+        }
 
         return [stencilExtension]
     }

@@ -11,6 +11,10 @@ extension HasAttributes {
         !unavailablePlatforms.isEmpty
     }
 
+    var isMainActor: Bool {
+        attributes.contains(.mainActor)
+    }
+
     var unavailablePlatformsCheck: String {
         hasUnavailablePlatforms ? "#if !os(\(unavailablePlatforms.joined(separator: ") && !os(")))" : ""
     }

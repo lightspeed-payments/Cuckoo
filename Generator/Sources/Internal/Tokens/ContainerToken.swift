@@ -41,6 +41,7 @@ extension ContainerToken {
             "initializers": initializers,
             "methods": methods,
             "attributes": attributes,
+            "isMainActor": isMainActor,
         ]
         .compactMapValues { $0 }
     }

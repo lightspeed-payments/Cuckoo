@@ -19,7 +19,7 @@ extension {{ container.parentFullyQualifiedName }} {
 // runtime support for constrained protocols with primary associated types
 @available(iOS 16, macOS 13, watchOS 9, tvOS 16, *)
 {% endif %}
-{{ container.accessibility|withSpace }}class {{ container.mockName }}{{ container.genericParameters }}:{% if container.isNSObjectProtocol %} NSObject,{% endif %} {{ container.name }}{% if container.isImplementation %}{{ container.genericArguments }}{% endif %},{% if container.isImplementation %} Cuckoo.ClassMock{% else %} Cuckoo.ProtocolMock{% endif %}, @unchecked Sendable {
+{{ container.accessibility|withSpace }}class {{ container.mockName }}{{ container.genericParameters }}:{% if container.isNSObjectProtocol %} NSObject,{% endif %} {{ container.name }}{% if container.isImplementation %}{{ container.genericArguments }}{% endif %},{% if container.isMainActor %} @preconcurrency{% endif %}{% if container.isImplementation %} Cuckoo.ClassMock{% else %} Cuckoo.ProtocolMock{% endif %}, @unchecked Sendable {
     {% if container.isGeneric and not container.isImplementation and not container.hasOnlyPrimaryAssociatedTypes %}
     {{ container.accessibility|withSpace }}typealias MocksType = \(typeErasureClassName)
     {% elif container.isImplementation %}
@@ -35,7 +35,7 @@ extension {{ container.parentFullyQualifiedName }} {
     {{ container.accessibility|withSpace }}{{ typealias }}
     {% endfor %}
 
-    {{ container.accessibility|withSpace }}let cuckoo_manager = Cuckoo.MockManager.preconfiguredManager ?? Cuckoo.MockManager(hasParent: {{ container.isImplementation }})
+    {{ container.isMainActor|nonisolatedUnsafe }}{{ container.accessibility|withSpace }}let cuckoo_manager = Cuckoo.MockManager.preconfiguredManager ?? Cuckoo.MockManager(hasParent: {{ container.isImplementation }})
 
     {% if container.isGeneric and not container.isImplementation and not container.hasOnlyPrimaryAssociatedTypes %}
 \(Templates.typeErasure.indented())

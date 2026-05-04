@@ -2,7 +2,8 @@ import Foundation
 
 extension Templates {
     static let typeErasure = """
-    {{ container.accessibility|withSpace }}class \(typeErasureClassName): {{ container.name }}, @unchecked Sendable {
+    {% if container.hasGlobalActor %}{{ container.globalActor }}
+    {% endif %}{{ container.accessibility|withSpace }}class \(typeErasureClassName): {{ container.name }}, @unchecked Sendable {
         private let reference: () -> any {{ container.name }}{{ container.genericPrimaryAssociatedTypeArguments }}
 
         {% for property in container.properties %}

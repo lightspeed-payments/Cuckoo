@@ -43,6 +43,10 @@ struct Variable: Token, HasAccessibility, HasAttributes {
             "stubType": (parent.isClass ? "Class" : "Protocol") + "ToBeStubbed\(readOnlyStubString)\(optionalString)\(throwingString)Property",
             "verifyType": "Verify\(readOnlyVerifyString)\(optionalString)Property",
             "attributes": attributes,
+            // Attributes safe to put on the stubbing/verification proxy properties.
+            // We strip global-actor attributes (e.g. `@MainActor`) because the proxy properties
+            // are accessed from non-isolated runtime helpers (`stub`, `verify`, ...).
+            "proxyAttributes": attributes.filter { !$0.isGlobalActor },
             "hasUnavailablePlatforms": hasUnavailablePlatforms,
             "unavailablePlatformsCheck": unavailablePlatformsCheck,
         ]

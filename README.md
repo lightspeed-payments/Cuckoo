@@ -25,6 +25,7 @@ Cuckoo is a powerful mocking framework that supports:
 - [x] inheritance (grandparent methods)
 - [x] generics
 - [x] simple type inference for instance variables (works with initializers, `as TYPE` notation, and can be overridden by specifying type explicitly)
+- [x] [`@MainActor`-isolated protocols and methods](#mainactor-isolated-protocols)
 - [x] [Objective-C mocks utilizing OCMock](#objective-c-support)
 
 ## What will not be supported
@@ -488,6 +489,80 @@ The build option `--clean` forces either build or download of the version specif
 The run script also syncs the generator to the correct version (either by building from source or downloading with `--download`) if needed.
 
 We recommend only using `--clean` when you're trying to fix a compile problem as it forces the build (or download) every time which makes the testing way longer than it needs to be.
+
+## `@MainActor`-isolated protocols
+Cuckoo recognizes `@MainActor` on protocols, classes, and individual methods/properties, and propagates it to the generated mock so the conformance compiles cleanly under Swift 6 strict concurrency.
+
+Given:
+
+```swift
+@MainActor
+public protocol Greeter {
+    var name: String { get set }
+    func greet(name: String) -> String
+    func compute(value: Int) async -> Int
+    func mayThrow() throws -> String
+}
+```
+
+Cuckoo generates roughly:
+
+```swift
+@MainActor
+public class MockGreeter: Greeter, @preconcurrency Cuckoo.ProtocolMock, @unchecked Sendable {
+    nonisolated(unsafe) public let cuckoo_manager = ...
+    // ... @MainActor-isolated method/property implementations
+}
+
+@MainActor
+public class GreeterStub: Greeter, @unchecked Sendable {
+    // ... no-op @MainActor implementations
+}
+```
+
+What gets propagated:
+
+| Generated type | `@MainActor`? | Notes |
+|---|---|---|
+| `Mock<Type>` | ✅ | Required to conform to a `@MainActor` protocol |
+| `<Type>Stub` (no-op stub) | ✅ | Same as above |
+| `DefaultImplCaller` (generic-protocol type-eraser) | ✅ | Same as above |
+| `__StubbingProxy_<Type>` | ❌ | Stays non-isolated so `stub(_:)` keeps working from any context |
+| `__VerificationProxy_<Type>` | ❌ | Stays non-isolated so `verify(_:)` keeps working from any context |
+
+Method-level isolation also works:
+
+```swift
+public protocol Mixed {
+    func nonIsolated(value: Int) -> Int
+
+    @MainActor
+    func mainActorOnly(name: String) -> String
+}
+```
+
+Here only `mainActorOnly` on the generated mock is `@MainActor`; the type itself stays non-isolated.
+
+#### Notes for users
+
+- **Test classes mocking a `@MainActor` protocol must be `@MainActor` themselves** (or call the mock from a `@MainActor` context). This is a Swift requirement, not a Cuckoo restriction:
+
+    ```swift
+    @MainActor
+    final class GreeterTests: XCTestCase {
+        func testGreet() {
+            let mock = MockGreeter()
+            stub(mock) { mock in
+                when(mock.greet(name: anyString())).thenReturn("Hello!")
+            }
+            XCTAssertEqual(mock.greet(name: "World"), "Hello!")
+            verify(mock).greet(name: equal(to: "World"))
+        }
+    }
+    ```
+
+- The generated `Cuckoo.ProtocolMock`/`Cuckoo.ClassMock` conformance is annotated `@preconcurrency` for `@MainActor` mocks. This relaxes the strict isolation check on the conformance, since the `Mock` protocol itself is non-isolated. Data-race-safety inside `MockManager` is preserved by an internal serial queue.
+- Custom user-defined global actors (e.g. `@MyGlobalActor`) are **not** auto-detected. Only `@MainActor` is recognized today. If you need other global actors, please open an issue.
 
 ## Objective-C Support
 For Objective-C support, Cuckoo wraps `OCMock` and uses its battle-tested functionality to bring support for mocking various Objective-C classes and protocols to Swift.

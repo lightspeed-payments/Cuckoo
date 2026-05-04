@@ -10,7 +10,7 @@ extension Templates {
     }
     {% for property in container.properties %}
     {{ property.unavailablePlatformsCheck }}
-    {% for attribute in property.attributes %}
+    {% for attribute in property.proxyAttributes %}
     {{ attribute }}
     {% endfor %}
     var {{property.name}}: Cuckoo.{{ property.stubType }}<{{ container.mockName }}, {% if property.isReadOnly %}{{property.type|genericSafe}}{% else %}{{property.nonOptionalType|genericSafe}}{% endif %}{% if method.isThrowing %},{{ method.throwTypeError }}{% endif %}> {
@@ -22,7 +22,7 @@ extension Templates {
     {% endfor %}
     {% for method in container.methods %}
     {{ method.unavailablePlatformsCheck }}
-    {% for attribute in method.attributes %}
+    {% for attribute in method.proxyAttributes %}
     {{ attribute }}
     {% endfor %}
     func {{method.name|escapeReservedKeywords}}{{method.self|matchableGenericNames}}({{method.parameters|matchableParameterSignature}}) -> {{method.stubFunction}}<({{method.genericInputTypes|genericSafe}}){%if method.returnType != "Void" %}, {{method.returnType|genericSafe}}{%endif%}{% if method.isThrowing %},{{ method.throwTypeError }}{% endif %}>{{method.self|matchableGenericWhereClause}} {

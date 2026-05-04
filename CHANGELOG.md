@@ -1,3 +1,9 @@
+- Add support for mocking `@MainActor`-isolated protocols and methods.
+  - The generator now recognizes `@MainActor` on protocols/classes and on individual methods/properties, and propagates it to the generated mock class, no-op stub class, and default-impl type-eraser.
+  - Mocks of `@MainActor` types declare their `Cuckoo.ProtocolMock`/`Cuckoo.ClassMock` conformance with `@preconcurrency` and emit `nonisolated(unsafe) let cuckoo_manager` so the runtime helpers (`stub`, `verify`, ...) keep working from non-isolated contexts.
+  - Stubbing/verification proxies are intentionally **not** annotated `@MainActor` so they remain callable from `stub`/`verify`. Method/property `@MainActor` is filtered out of proxy declarations for the same reason.
+  - `MockManager`'s async `call`, `callThrows`, `callRethrows`, `getter`, and `getterThrows` APIs gained an `isolation: isolated (any Actor)? = #isolation` parameter so async methods on `@MainActor` mocks no longer trip "sending non-Sendable" diagnostics in Swift 6 strict mode.
+
 - Set exact versions for dependencies to prevent future compile errors.
 
 - Fix protocol DefaultImpl with associated types + generic functions

@@ -41,6 +41,8 @@ extension ContainerToken {
             "initializers": initializers,
             "methods": methods,
             "attributes": attributes,
+            "globalActor": globalActor?.description ?? "",
+            "hasGlobalActor": hasGlobalActor,
         ]
         .compactMapValues { $0 }
     }

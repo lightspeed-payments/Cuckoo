@@ -425,6 +425,11 @@ extension Crawler {
                         .split(separator: ",")
                         .map { String($0).trimmed } ?? []
                 )
+            case "MainActor":
+                // `@MainActor` is the only global actor recognized by Cuckoo today.
+                // Custom user-defined global actors are not detected automatically because we
+                // would need semantic information to tell them apart from regular attributes.
+                return .globalActor(name: "MainActor")
             // These will need some more work, not sure if worth the effort.
 //            case "objc":
 //                return .objc

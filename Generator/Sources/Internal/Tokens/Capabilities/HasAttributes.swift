@@ -15,6 +15,16 @@ extension HasAttributes {
         hasUnavailablePlatforms ? "#if !os(\(unavailablePlatforms.joined(separator: ") && !os(")))" : ""
     }
 
+    /// The first global actor attribute applied to this declaration, if any.
+    /// Today only `@MainActor` is detected by the Crawler, but more global actors could be added.
+    var globalActor: Attribute? {
+        attributes.first { $0.isGlobalActor }
+    }
+
+    var hasGlobalActor: Bool {
+        globalActor != nil
+    }
+
     func attributesSerialize() -> GeneratorContext {
         [
             "attributes": attributes,

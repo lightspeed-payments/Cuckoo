@@ -4,6 +4,9 @@ enum Attribute: Hashable, CustomStringConvertible {
     case available(arguments: [String])
     case objc
     case objcMembers
+    /// A global actor attribute such as `@MainActor`.
+    /// The associated `name` does not include the leading `@`.
+    case globalActor(name: String)
 
     var description: String {
         switch self {
@@ -13,6 +16,8 @@ enum Attribute: Hashable, CustomStringConvertible {
             "@objc"
         case .objcMembers:
             "@objcMembers"
+        case .globalActor(let name):
+            "@\(name)"
         }
     }
 
@@ -24,5 +29,9 @@ enum Attribute: Hashable, CustomStringConvertible {
         }
 
         return String(arguments[0])
+    }
+
+    var isGlobalActor: Bool {
+        if case .globalActor = self { true } else { false }
     }
 }

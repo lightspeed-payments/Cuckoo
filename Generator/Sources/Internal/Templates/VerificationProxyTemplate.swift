@@ -14,7 +14,7 @@ extension Templates {
     }
     {% for property in container.properties %}
     
-    {% for attribute in property.attributes %}
+    {% for attribute in property.proxyAttributes %}
     {{ attribute }}
     {% endfor %}
     var {{property.name}}: Cuckoo.{{property.verifyType}}<{% if property.isReadOnly %}{{property.type|genericSafe}}{% else %}{{property.nonOptionalType|genericSafe}}{% endif %}> {
@@ -24,7 +24,7 @@ extension Templates {
     {% for method in container.methods %}
     
     {{ method.unavailablePlatformsCheck }}
-    {% for attribute in method.attributes %}
+    {% for attribute in method.proxyAttributes %}
     {{ attribute }}
     {% endfor %}
     @discardableResult

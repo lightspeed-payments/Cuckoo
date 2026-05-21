@@ -111,6 +111,10 @@ extension Method {
             "self": self,
             "documentation": documentation,
             "attributes": attributes,
+            // Attributes safe to put on the stubbing/verification proxy methods.
+            // We strip global-actor attributes (e.g. `@MainActor`) because the proxy methods
+            // are called from non-isolated runtime helpers (`stub`, `verify`, ...).
+            "proxyAttributes": attributes.filter { !$0.isGlobalActor },
             "isOverriding": parent.isClass,
             "name": name,
             "accessibility": accessibility.sourceName,

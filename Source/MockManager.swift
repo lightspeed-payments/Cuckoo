@@ -46,8 +46,8 @@ public class MockManager {
         return callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
     }
     
-    private func callInternal<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: () async -> OUT, defaultCall: () async -> OUT) async -> OUT {
-        return await callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
+    private func callInternal<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, isolation: isolated (any Actor)? = #isolation, superclassCall: () async -> OUT, defaultCall: () async -> OUT) async -> OUT {
+        return await callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, isolation: isolation, superclassCall: superclassCall, defaultCall: defaultCall)
     }
     
     private func callRethrowsInternal<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: () throws(ERROR) -> OUT, defaultCall: () throws(ERROR) -> OUT) rethrows -> OUT {
@@ -90,7 +90,7 @@ public class MockManager {
         }
     }
     
-    private func callRethrowsInternal<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: () async throws(ERROR) -> OUT, defaultCall: () async throws(ERROR) -> OUT) async rethrows -> OUT {
+    private func callRethrowsInternal<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, isolation: isolated (any Actor)? = #isolation, superclassCall: () async throws(ERROR) -> OUT, defaultCall: () async throws(ERROR) -> OUT) async rethrows -> OUT {
         let stubCall = ConcreteStubCall(method: method, parameters: escapingParameters)
         queue.sync {
             stubCalls.append(stubCall)
@@ -166,7 +166,7 @@ public class MockManager {
         }
     }
     
-    private func callThrowsInternal<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: () async throws(ERROR) -> OUT, defaultCall: () async throws(ERROR) -> OUT) async throws(ERROR) -> OUT {
+    private func callThrowsInternal<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, isolation: isolated (any Actor)? = #isolation, superclassCall: () async throws(ERROR) -> OUT, defaultCall: () async throws(ERROR) -> OUT) async throws(ERROR) -> OUT {
         let stubCall = ConcreteStubCall(method: method, parameters: escapingParameters)
         queue.sync {
             stubCalls.append(stubCall)
@@ -316,8 +316,8 @@ extension MockManager {
         return call(getterName(property), parameters: Void(), escapingParameters: Void(), superclassCall: superclassCall(), defaultCall: defaultCall())
     }
 
-    public func getter<T>(_ property: String, superclassCall: @autoclosure () async -> T, defaultCall: @autoclosure () async -> T) async -> T {
-        return await call(getterName(property), parameters: Void(), escapingParameters: Void(), superclassCall: await superclassCall(), defaultCall: await defaultCall())
+    public func getter<T>(_ property: String, isolation: isolated (any Actor)? = #isolation, superclassCall: @autoclosure () async -> T, defaultCall: @autoclosure () async -> T) async -> T {
+        return await call(getterName(property), parameters: Void(), escapingParameters: Void(), isolation: isolation, superclassCall: await superclassCall(), defaultCall: await defaultCall())
     }
 
     public func setter<T>(_ property: String, value: T, superclassCall: @autoclosure () -> Void, defaultCall: @autoclosure () -> Void) {
@@ -330,8 +330,8 @@ extension MockManager {
         return try callThrows(getterName(property), parameters: Void(), escapingParameters: Void(), errorType: (Error).self, superclassCall: try superclassCall(), defaultCall: try defaultCall())
     }
 
-    public func getterThrows<T>(_ property: String, superclassCall: @autoclosure () async throws -> T, defaultCall: @autoclosure () async throws -> T) async throws -> T {
-        return try await callThrows(getterName(property), parameters: Void(), escapingParameters: Void(), errorType: (Error).self, superclassCall: try await superclassCall(), defaultCall: try await defaultCall())
+    public func getterThrows<T>(_ property: String, isolation: isolated (any Actor)? = #isolation, superclassCall: @autoclosure () async throws -> T, defaultCall: @autoclosure () async throws -> T) async throws -> T {
+        return try await callThrows(getterName(property), parameters: Void(), escapingParameters: Void(), errorType: (Error).self, isolation: isolation, superclassCall: try await superclassCall(), defaultCall: try await defaultCall())
     }
 }
 
@@ -340,8 +340,8 @@ extension MockManager {
         return callInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
     }
     
-    public func call<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: @autoclosure () async -> OUT, defaultCall: @autoclosure () async -> OUT) async -> OUT {
-        return await callInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
+    public func call<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, isolation: isolated (any Actor)? = #isolation, superclassCall: @autoclosure () async -> OUT, defaultCall: @autoclosure () async -> OUT) async -> OUT {
+        return await callInternal(method, parameters: parameters, escapingParameters: escapingParameters, isolation: isolation, superclassCall: superclassCall, defaultCall: defaultCall)
     }
 }
 
@@ -350,8 +350,8 @@ extension MockManager {
         return try callThrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
     }
     
-    public func callThrows<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, errorType: ERROR.Type, superclassCall: @autoclosure () async throws(ERROR) -> OUT, defaultCall: @autoclosure () async throws(ERROR) -> OUT) async throws(ERROR) -> OUT {
-        return try await callThrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
+    public func callThrows<IN, OUT, ERROR>(_ method: String, parameters: IN, escapingParameters: IN, errorType: ERROR.Type, isolation: isolated (any Actor)? = #isolation, superclassCall: @autoclosure () async throws(ERROR) -> OUT, defaultCall: @autoclosure () async throws(ERROR) -> OUT) async throws(ERROR) -> OUT {
+        return try await callThrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, isolation: isolation, superclassCall: superclassCall, defaultCall: defaultCall)
     }
 }
 
@@ -360,7 +360,7 @@ extension MockManager {
         return try callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
     }
     
-    public func callRethrows<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, superclassCall: @autoclosure () async throws -> OUT, defaultCall: @autoclosure () async throws -> OUT) async rethrows -> OUT {
-        return try await callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, superclassCall: superclassCall, defaultCall: defaultCall)
+    public func callRethrows<IN, OUT>(_ method: String, parameters: IN, escapingParameters: IN, isolation: isolated (any Actor)? = #isolation, superclassCall: @autoclosure () async throws -> OUT, defaultCall: @autoclosure () async throws -> OUT) async rethrows -> OUT {
+        return try await callRethrowsInternal(method, parameters: parameters, escapingParameters: escapingParameters, isolation: isolation, superclassCall: superclassCall, defaultCall: defaultCall)
     }
 }
